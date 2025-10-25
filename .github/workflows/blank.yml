@@ -1,0 +1,54 @@
+name: Download from Private Repos
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v2.4.1)'
+        required: true
+        default: 'v2.4.1'
+
+jobs:
+  download:
+    runs-on: windows-latest
+    steps:
+    - name: Create download directory
+      run: New-Item -ItemType Directory -Force -Path "./downloads"
+      
+    - name: Download from zs repository
+      run: |
+        $version = "${{ github.event.inputs.version }}"
+        $token = "${{ secrets.PAT_TOKEN }}"
+        
+        # 下载 zs 仓库的文件
+        $headers = @{
+          "Authorization" = "token $token"
+          "Accept" = "application/octet-stream"
+        }
+        
+        # 假设你知道确切的文件名
+        Invoke-WebRequest -Uri "https://github.com/onodera2007/zs/releases/download/$version/yidhari-dispatch-server.exe" `
+          -Headers $headers -OutFile "./downloads/yidhari-dispatch-server.exe"
+        
+        Invoke-WebRequest -Uri "https://github.com/onodera2007/zs/releases/download/$version/yidhari-game-server.exe" `
+          -Headers $headers -OutFile "./downloads/yidhari-game-server.exe"
+      shell: pwsh
+      
+    - name: Download from lancher repository
+      run: |
+        $version = "${{ github.event.inputs.version }}"
+        $token = "${{ secrets.PAT_TOKEN }}"
+        
+        $headers = @{
+          "Authorization" = "token $token"
+          "Accept" = "application/octet-stream"
+        }
+        
+        # 下载 lancher 仓库的文件（需要知道确切文件名）
+        Invoke-WebRequest -Uri "https://github.com/onodera2007/lancher/releases/download/$version/launcher.exe" `
+          -Headers $headers -OutFile "./downloads/launcher.exe"
+      shell: pwsh
+      
+    - name: List downloaded files
+      run: Get-ChildItem "./downloads"
+      shell: pwsh
