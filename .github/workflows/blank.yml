@@ -69,3 +69,10 @@ jobs:
     - name: List all downloaded files
       run: Get-ChildItem
       shell: pwsh
+    - name: Upload downloaded files
+      uses: actions/upload-artifact@v4
+      with:
+        name: downloaded-files
+        path: |
+          ./*.exe
+          ./*.dll
