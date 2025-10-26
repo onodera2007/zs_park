@@ -22,11 +22,11 @@ jobs:
         }
 
         # 获取 zs release 信息
-        Write-Host "Fetching release info for zs $version..."
+        Write-Host "Fetching release info for zs ${version}..."
         $zsRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/onodera2007/zs/releases/tags/$version" -Headers $headers
 
-        Write-Host "Available files in zs $version:"
-        $zsRelease.assets | ForEach-Object { Write-Host " - $($_.name)" }
+        Write-Host "Available files in zs ${version}:"
+        $zsRelease.assets | ForEach-Object { Write-Host (" - {0}" -f $_.name) }
 
         # 下载所有文件
         foreach ($asset in $zsRelease.assets) {
@@ -49,11 +49,11 @@ jobs:
         }
 
         # 获取 lancher release 信息
-        Write-Host "Fetching release info for lancher $version..."
+        Write-Host "Fetching release info for lancher ${version}..."
         $lancherRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/onodera2007/lancher/releases/tags/$version" -Headers $headers
 
-        Write-Host "Available files in lancher $version:"
-        $lancherRelease.assets | ForEach-Object { Write-Host " - $($_.name)" }
+        Write-Host "Available files in lancher ${version}:"
+        $lancherRelease.assets | ForEach-Object { Write-Host (" - {0}" -f $_.name) }
 
         # 下载所有文件
         foreach ($asset in $lancherRelease.assets) {
