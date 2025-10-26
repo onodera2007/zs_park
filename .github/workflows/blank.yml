@@ -12,29 +12,52 @@ jobs:
   download:
     runs-on: windows-latest
     steps:
-    - name: Download all files from zs
-      uses: svenstaro/download-release-action@v2
-      with:
-        repo: onodera2007/zs
-        tag: ${{ github.event.inputs.version }}
-        token: ${{ secrets.PAT_TOKEN }}
-        out: ./downloads/zs
-        # 下载所有文件
-        file: "*"
-        
-    - name: Download all files from lancher
-      uses: svenstaro/download-release-action@v2
-      with:
-        repo: onodera2007/lancher
-        tag: ${{ github.event.inputs.version }}
-        token: ${{ secrets.PAT_TOKEN }}
-        out: ./downloads/lancher
-        file: "*"
-        
-    - name: List downloaded files
+    - name: Download from zs repository
       run: |
-        echo "Files from zs:"
-        Get-ChildItem "./downloads/zs" -Recurse
-        echo "Files from lancher:"
-        Get-ChildItem "./downloads/lancher" -Recurse
+        $version = "${{ github.event.inputs.version }}"
+        $token = "${{ secrets.PAT_TOKEN }}"
+        
+        # 获取 zs release 信息
+        $zsRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/onodera2007/zs/releases/tags/$version" -Headers @{
+          "Authorization" = "token $token"
+          "Accept" = "application/vnd.github.v3+json"
+        }
+        
+        Write-Host "Available files in zs $version :"
+        $zsRelease.assets | ForEach-Object { Write-Host " - $($_.name)" }
+        
+        # 下载所有文件
+        foreach ($asset in $zsRelease.assets) {
+          Write-Host "Downloading $($asset.name)..."
+          Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $asset.name -Headers @{
+            "Authorization" = "token $token"
+          }
+        }
+      shell: pwsh
+      
+    - name: Download from lancher repository
+      run: |
+        $version = "${{ github.event.inputs.version }}"
+        $token = "${{ secrets.PAT_TOKEN }}"
+        
+        # 获取 lancher release 信息
+        $lancherRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/onodera2007/lancher/releases/tags/$version" -Headers @{
+          "Authorization" = "token $token"
+          "Accept" = "application/vnd.github.v3+json"
+        }
+        
+        Write-Host "Available files in lancher $version :"
+        $lancherRelease.assets | ForEach-Object { Write-Host " - $($_.name)" }
+        
+        # 下载所有文件
+        foreach ($asset in $lancherRelease.assets) {
+          Write-Host "Downloading $($asset.name)..."
+          Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $asset.name -Headers @{
+            "Authorization" = "token $token"
+          }
+        }
+      shell: pwsh
+      
+    - name: List all downloaded files
+      run: Get-ChildItem
       shell: pwsh
