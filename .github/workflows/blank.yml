@@ -69,10 +69,14 @@ jobs:
     - name: List all downloaded files
       run: Get-ChildItem
       shell: pwsh
-    - name: Upload downloaded files
-      uses: actions/upload-artifact@v4
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
       with:
-        name: downloaded-files
-        path: |
+        overwrite: true
+        tag_name: ${{ github.event.inputs.version }}
+        generate_release_notes: true
+        files: |
           ./*.exe
           ./*.dll
+      env:
+        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
