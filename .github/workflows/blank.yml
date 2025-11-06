@@ -6,7 +6,6 @@ on:
       version:
         description: 'Version tag'
         required: true
-        default: 'v2.4.1'
 
 jobs:
   download:
@@ -81,7 +80,7 @@ jobs:
       with:
         overwrite: true
         tag_name: ${{ github.event.inputs.version }}
-        generate_release_notes: true
+        generate_release_notes: false
         files: |
           ./*.exe
           ./*.dll
