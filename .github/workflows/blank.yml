@@ -8,10 +8,13 @@ on:
         required: true
 
 jobs:
-  download:
+  download-zs:
     runs-on: windows-latest
+    outputs:
+      files: ${{ steps.download.outputs.files }}
     steps:
     - name: Download from zs repository
+      id: download
       shell: pwsh
       run: |
         $version = "${{ github.event.inputs.version }}"
@@ -23,25 +26,36 @@ jobs:
 
         Write-Host "Fetching release info for zs ${version}..."
         try {
-          $zsRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/onodera2007/zs/releases/tags/$version" -Headers $headers
+          $release = Invoke-RestMethod -Uri "https://api.github.com/repos/onodera2007/zs/releases/tags/$version" -Headers $headers
         } catch {
           Write-Error "Failed to fetch zs release info. Check if the tag exists and PAT_TOKEN has access."
           exit 1
         }
 
         Write-Host "Available files in zs ${version}:"
-        $zsRelease.assets | ForEach-Object { Write-Host (" - {0}" -f $_.name) }
+        $release.assets | ForEach-Object { Write-Host (" - {0}" -f $_.name) }
 
-        foreach ($asset in $zsRelease.assets) {
+        $downloadedFiles = @()
+        foreach ($asset in $release.assets) {
           $downloadUrl = "https://api.github.com/repos/onodera2007/zs/releases/assets/$($asset.id)"
           Write-Host "Downloading $($asset.name)..."
           Invoke-WebRequest -Uri $downloadUrl -OutFile $asset.name -Headers @{
             "Authorization" = "Bearer $token"
             "Accept" = "application/octet-stream"
           }
+          $downloadedFiles += $asset.name
         }
+        
+        # 输出下载的文件列表
+        echo "files=$($downloadedFiles -join ',')" >> $env:GITHUB_OUTPUT
 
+  download-lancher:
+    runs-on: windows-latest
+    outputs:
+      files: ${{ steps.download.outputs.files }}
+    steps:
     - name: Download from lancher repository
+      id: download
       shell: pwsh
       run: |
         $version = "${{ github.event.inputs.version }}"
@@ -53,24 +67,32 @@ jobs:
 
         Write-Host "Fetching release info for lancher ${version}..."
         try {
-          $lancherRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/onodera2007/lancher/releases/tags/$version" -Headers $headers
+          $release = Invoke-RestMethod -Uri "https://api.github.com/repos/onodera2007/lancher/releases/tags/$version" -Headers $headers
         } catch {
           Write-Error "Failed to fetch lancher release info. Check if the tag exists and PAT_TOKEN has access."
           exit 1
         }
 
         Write-Host "Available files in lancher ${version}:"
-        $lancherRelease.assets | ForEach-Object { Write-Host (" - {0}" -f $_.name) }
+        $release.assets | ForEach-Object { Write-Host (" - {0}" -f $_.name) }
 
-        foreach ($asset in $lancherRelease.assets) {
+        $downloadedFiles = @()
+        foreach ($asset in $release.assets) {
           $downloadUrl = "https://api.github.com/repos/onodera2007/lancher/releases/assets/$($asset.id)"
           Write-Host "Downloading $($asset.name)..."
           Invoke-WebRequest -Uri $downloadUrl -OutFile $asset.name -Headers @{
             "Authorization" = "Bearer $token"
             "Accept" = "application/octet-stream"
           }
+          $downloadedFiles += $asset.name
         }
+        
+        echo "files=$($downloadedFiles -join ',')" >> $env:GITHUB_OUTPUT
 
+  create-release:
+    runs-on: windows-latest
+    needs: [download-zs, download-lancher]
+    steps:
     - name: List all downloaded files
       shell: pwsh
       run: Get-ChildItem
